@@ -1,19 +1,35 @@
-import { Bot } from 'grammy';
+import { Bot, Keyboard, GrammyError, HttpError } from 'grammy';
 import * as dotenv from 'dotenv';
 dotenv.config();
-// Create an instance of the `Bot` class and pass your bot token to it.
-const bot = new Bot(process.env.SECRET_KEY ?? ''); // <-- put your bot token between the ""
 
-// You can now register listeners on your bot object `bot`.
-// grammY will call the listeners when users send messages to your bot.
+const bot = new Bot(process.env.SECRET_KEY ?? '');
 
 // Handle the /start command.
-bot.command('start', (ctx) => {
-  console.log(ctx);
+bot.command('start', async (ctx) => {
+  const startKeyboard = new Keyboard().text('HTML').text('CSS').row().text('JavaScript').text('React').resized();
+  await ctx.reply(
+    'Greetings, frontend developer!\nWelcome to Interview Guru Bot - your trusted assistant in preparing for an interview for a frontend position.',
+  );
+  // show keyboard
+  await ctx.reply('Choose theme', {
+    reply_markup: startKeyboard,
+  });
 });
 
-// Now that you specified how to handle messages, you can start your bot.
-// This will connect to the Telegram servers and wait for messages.
-
+bot.hears(['HTML', 'CSS', 'JavaScript', 'React'], async (ctx) => {
+  await ctx.reply(`What is ${ctx.message?.text}?`);
+});
+bot.catch((err) => {
+  const ctx = err.ctx;
+  console.error(`Error while handling update ${ctx.update.update_id}:`);
+  const e = err.error;
+  if (e instanceof GrammyError) {
+    console.error('Error in request:', e.description);
+  } else if (e instanceof HttpError) {
+    console.error('Could not contact Telegram:', e);
+  } else {
+    console.error('Unknown error:', e);
+  }
+});
 // Start the bot.
 bot.start();
